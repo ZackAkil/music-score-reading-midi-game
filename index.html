@@ -117,7 +117,7 @@
 
                     // const top = ((note.note - 59) * 3) + 15
 
-                    
+
 
                     const note_pos_map = {
                         64: { 'note': 'E', 'pos': 0 },
@@ -129,7 +129,7 @@
                         53: { 'note': 'F', 'pos': 30 },
                     }
 
-                    if (!(note.note in note_pos_map)){
+                    if (!(note.note in note_pos_map)) {
                         return { 'left': note.time * 5, 'top': 50 }
                     }
 
@@ -141,7 +141,14 @@
         })
 
         function create_note(note) {
+            // playChannel(note)
+            playNote(noteToFreq(note), .5, .2)
             app.notes.push({ 'note': note, 'time': 0, 'created': Date.now() })
+        }
+
+        function noteToFreq(note) {
+            let a = 440; //frequency of A (coomon value is 440Hz)
+            return (a / 32) * (2 ** ((note - 9) / 12));
         }
 
         function tick() {
@@ -171,6 +178,24 @@
                 }
 
             }
+        }
+
+        audio = new (window.AudioContext || window.webkitAudioContext)()
+
+        function playNote(frequency, volume, duration) {
+            var halfPeriod = 1 / frequency / 2
+            if (duration > halfPeriod) duration -= duration % halfPeriod
+            else duration = halfPeriod
+
+            var gain = audio.createGain()
+            var oscillator = audio.createOscillator()
+            oscillator.connect(gain)
+            gain.connect(audio.destination)
+
+            oscillator.frequency.value = frequency
+            gain.gain.value = volume
+            oscillator.start(0)
+            oscillator.stop(audio.currentTime + duration)
         }
 
 
