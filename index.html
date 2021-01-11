@@ -1,0 +1,181 @@
+<html>
+
+<head>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
+
+    <style>
+        #game {
+            height: 150px;
+            width: 700px;
+            border: red solid 1px;
+            padding: 10px;
+            ;
+        }
+
+        .score {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .line {
+            height: 10px;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .note {
+            height: 4px;
+            width: 7px;
+            /* background-color: black; */
+            border: solid black 3px;
+            border-radius: 50%;
+            position: absolute;
+            transition: all .1s linear;
+        }
+    </style>
+
+</head>
+
+<body>
+    <h1>Music score reading midi game</h1>
+
+    <div id="game">
+        <p>Current key = {{current_key}}</p>
+        <div class="score">
+            <div v-for="note in notes" class="note" :key="note.created" v-bind:style="note_style(note)"></div>
+            <svg width="100" height="10">
+                <line x1="0" y1="0" x2="700" y2="0" style="stroke:rgb(0, 0, 0);stroke-width:1" />
+                <line x1="0" y1="10" x2="700" y2="10" style="stroke:rgb(0, 0, 0);stroke-width:1" />
+                <line x1="0" y1="20" x2="700" y2="20" style="stroke:rgb(0, 0, 0);stroke-width:1" />
+                <line x1="0" y1="30" x2="700" y2="30" style="stroke:rgb(0, 0, 0);stroke-width:1" />
+                <line x1="0" y1="40" x2="700" y2="40" style="stroke:rgb(0, 0, 0);stroke-width:1" />
+            </svg>
+        </div>
+
+        <p v-for="item in notes">
+            {{item}}
+        </p>
+    </div>
+
+
+
+
+
+    <script>
+
+        if (navigator.requestMIDIAccess) {
+            console.log('This browser supports WebMIDI!');
+        } else {
+            console.log('WebMIDI is not supported in this browser.');
+        }
+
+
+        navigator.requestMIDIAccess().then(onMIDISuccess, onMIDIFailure);
+
+
+        function onMIDIFailure() {
+            console.log('Could not access your MIDI devices.');
+        }
+
+
+        function onMIDISuccess(midiAccess) {
+            for (var input of midiAccess.inputs.values())
+                input.onmidimessage = getMIDIMessage;
+        }
+
+        function getMIDIMessage(midiMessage) {
+            // console.log(midiMessage.data);
+            if (midiMessage.data[0] == 144) {
+                console.log(midiMessage.data[1]);
+                app.current_key = midiMessage.data[1]
+                create_note(midiMessage.data[1])
+            }
+
+        }
+
+        var app = new Vue({
+            el: '#game',
+            data: {
+                current_key: null,
+                notes: [{ 'note': 55, 'time': 0, 'created': Date.now() }],
+                message: 'Hello Vue!'
+            },
+            methods: {
+                note_style(note) {
+                    // f - 53
+                    // g - 55
+                    // a - 57
+                    // b - 59
+                    // c - 60
+                    // d - 62
+                    // e - 64
+
+                    // const top = ((note.note - 59) * 3) + 15
+
+                    
+
+                    const note_pos_map = {
+                        64: { 'note': 'E', 'pos': 0 },
+                        62: { 'note': 'D', 'pos': 5 },
+                        60: { 'note': 'C', 'pos': 10 },
+                        59: { 'note': 'B', 'pos': 15 },
+                        57: { 'note': 'A', 'pos': 20 },
+                        55: { 'note': 'G', 'pos': 25 },
+                        53: { 'note': 'F', 'pos': 30 },
+                    }
+
+                    if (!(note.note in note_pos_map)){
+                        return { 'left': note.time * 5, 'top': 50 }
+                    }
+
+
+
+                    return { 'left': note.time * 5, 'top': note_pos_map[note.note].pos }
+                }
+            }
+        })
+
+        function create_note(note) {
+            app.notes.push({ 'note': note, 'time': 0, 'created': Date.now() })
+        }
+
+        function tick() {
+
+            app.notes.forEach(element => {
+                if (element.time > 100)
+                    app.notes.shift()
+            });
+
+            app.notes.forEach(element => {
+
+                // if (element.time > 20)
+                //     remove_element(app.notes, element)
+                // else
+                element.time += 2
+
+            });
+        }
+
+        function remove_element(arr, element) {
+
+            for (var i = 0; i < arr.length; i++) {
+
+                if (arr[i] === element) {
+
+                    arr.splice(i, 1);
+                }
+
+            }
+        }
+
+
+        setInterval(tick, 100)
+    </script>
+</body>
+
+</html>
